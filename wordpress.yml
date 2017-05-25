@@ -1,0 +1,65 @@
+---
+- hosts: wordpress
+  vars:
+    db_name: my_wordpress
+    db_user: my_wordpress_user
+    db_passwd: test1234
+    site_url: example.com
+
+  become: yes
+  become_method: sudo
+  tasks:
+
+    - name: install packages
+      apt: name={{ item }} update_cache=yes state=latest
+      with_items:
+        - apache2
+        - php
+        - php-cli
+        - php-curl
+        - php-gd
+        - php-mysql
+        - php-mcrypt
+        - mariadb-server
+        - mariadb-client
+        - python-mysqldb
+
+    - name: create Wordpress database
+      mysql_db: name={{ db_name }} state=present
+
+    - name: create database user
+      mysql_user: name={{ db_user }} password={{ db_passwd }} priv={{ db_name }}.*:ALL host='localhost' state=present
+
+    - name: Download Wordpress
+      get_url: url=https://wordpress.org/latest.tar.gz dest=/tmp/latest.tar.gz
+
+    - name: Extract Wordpress
+      command: /bin/tar -C /opt -xf /tmp/latest.tar.gz creates=/opt/wordpress
+
+    - name: Fetch salts for config file
+      local_action: command curl https://api.wordpress.org/secret-key/1.1/salt/
+      register: "wp_salt"
+      become: no
+
+    - name: Copy Wordpress config
+      template: src=templates/wp-config.php dest=/opt/wordpress/
+
+    - name: Change ownership
+      file: path=/opt/wordpress owner=www-data group=www-data recurse=yes
+
+    - name: Copy Apache2 config
+      template: src=templates/site.conf dest=/etc/apache2/sites-available/{{ site_url }}.conf
+
+    - name: Change max file upload size
+      lineinfile: regexp='^(upload_max_filesize = )[0-9]+M$' line='\g<1>5M' path=/etc/php/7.0/apache2/php.ini backrefs=yes state=present backup=yes
+      notify:
+        - restart apache 
+
+    - name: Enable site
+      command: /usr/sbin/a2ensite {{ site_url }}
+      notify:
+        - restart apache
+
+  handlers:
+    - name: restart apache
+      service: name=apache2 state=restarted
