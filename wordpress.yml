@@ -14,12 +14,12 @@
       apt: name={{ item }} update_cache=yes state=latest
       with_items:
         - apache2
-        - php
-        - php-cli
-        - php-curl
-        - php-gd
-        - php-mysql
-        - php-mcrypt
+        - php7.0
+        - php7.0-cli
+        - php7.0-curl
+        - php7.0-gd
+        - php7.0-mysql
+        - php7.0-mcrypt
         - mariadb-server
         - mariadb-client
         - python-mysqldb
