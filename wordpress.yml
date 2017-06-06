@@ -6,8 +6,7 @@
     db_passwd: test1234
     site_url: example.com
 
-  become: yes
-  become_method: sudo
+  remote_user: root
   tasks:
 
     - name: install packages
