@@ -24,7 +24,7 @@
         - python-mysqldb
 
     - name: create Wordpress database
-      mysql_db: name={{ db_name }} state=present
+      mysql_db: name={{ db_name }} encoding=utf8 state=present
 
     - name: create database user
       mysql_user: name={{ db_user }} password={{ db_passwd }} priv={{ db_name }}.*:ALL host='localhost' state=present
